@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import chat, document, workflow
-from app.config import GITHUB_TOKEN, GITHUB_ENDPOINT, GITHUB_MODEL
+from app.config import github_token_debug_info
 
 app = FastAPI()
 
@@ -22,11 +22,7 @@ app.include_router(workflow.router, tags=["Workflow Automation"])
 
 @app.get("/debug")
 def debug():
-    return {
-        "token_exists": bool(GITHUB_TOKEN),
-        "endpoint": GITHUB_ENDPOINT,
-        "model": GITHUB_MODEL
-    }
+    return github_token_debug_info()
 
 @app.get("/")
 def root():
