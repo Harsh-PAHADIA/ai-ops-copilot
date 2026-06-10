@@ -23,7 +23,7 @@ const DocAnalysis = () => {
 
     try {
         const res = await axios.post(
-            'https://ai-ops-copilot-backend.onrender.com/document/analyze',
+            '/document/analyze',
             {
                 content,
                 action: activeMode

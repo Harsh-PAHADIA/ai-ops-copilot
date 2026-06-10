@@ -25,7 +25,7 @@ const Chat = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post('/api/chat', { message: userMessage });
+            const response = await axios.post('/chat', { message: userMessage });
             setMessages(prev => [...prev, { role: 'bot', content: response.data.response }]);
         } catch (error) {
             setMessages(prev => [...prev, { role: 'bot', content: 'Error: Failed to connect to AI Ops engine.' }]);

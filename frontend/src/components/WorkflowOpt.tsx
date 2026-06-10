@@ -13,7 +13,7 @@ const WorkflowOpt = () => {
     useEffect(() => {
         const fetchWorkflows = async () => {
             try {
-                const res = await axios.get('/api/workflows/common');
+                const res = await axios.get('/workflows/common');
                 setCommonWorkflows(res.data.workflows);
             } catch (err) {
                 console.error('Failed to fetch workflows');
@@ -26,7 +26,7 @@ const WorkflowOpt = () => {
         if (!description.trim() || loading) return;
         setLoading(true);
         try {
-            const res = await axios.post('/api/workflow/optimize', {
+            const res = await axios.post('/workflow/optimize', {
                 task_description: description
             });
             setPlan(res.data.optimization_plan);
