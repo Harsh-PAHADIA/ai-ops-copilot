@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, Search, Loader2, CheckCircle2, ChevronRight } from 'lucide-react';
-import axios from 'axios';
+import api from '../api';
 import { useLanguage } from '../LanguageContext';
 
 const DocAnalysis = () => {
@@ -22,7 +22,7 @@ const DocAnalysis = () => {
     setLoading(true);
 
     try {
-        const res = await axios.post(
+        const res = await api.post(
             '/document/analyze',
             {
                 content,

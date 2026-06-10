@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, User, Bot, Loader2 } from 'lucide-react';
-import axios from 'axios';
+import api from '../api';
 import { useLanguage } from '../LanguageContext';
 
 const Chat = () => {
@@ -25,7 +25,7 @@ const Chat = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post('/chat', { message: userMessage });
+            const response = await api.post('/chat', { message: userMessage });
             setMessages(prev => [...prev, { role: 'bot', content: response.data.response }]);
         } catch (error) {
             setMessages(prev => [...prev, { role: 'bot', content: 'Error: Failed to connect to AI Ops engine.' }]);
