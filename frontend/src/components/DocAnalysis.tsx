@@ -17,23 +17,36 @@ const DocAnalysis = () => {
     ];
 
     const handleAnalyze = async () => {
-        if (!content.trim() || loading) return;
-        setLoading(true);
-      try {
-          const res = await axios.post(
-             'https://ai-ops-copilot-backend.onrender.com/document/analyze',
-        {
-            content,
-            action: activeMode
-        }
-    );
-            setResult(res.data.analysis);
-        } catch (err) {
-            setResult('Error: Analysis engine unreachable.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    if (!content.trim() || loading) return;
+
+    setLoading(true);
+
+    try {
+        const res = await axios.post(
+            'https://ai-ops-copilot-backend.onrender.com/document/analyze',
+            {
+                content,
+                action: activeMode
+            }
+        );
+
+        console.log("Response:", res.data);
+        setResult(res.data.analysis);
+
+    } catch (err: any) {
+        console.error("API Error:", err);
+        setResult(
+            `Error: ${
+                err?.response?.data?.detail ||
+                err?.message ||
+                "Analysis engine unreachable."
+            }`
+        );
+    } finally {
+        setLoading(false);
+    }
+};
+
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in slide-in-from-right-4 duration-500">
