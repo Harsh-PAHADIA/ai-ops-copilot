@@ -19,11 +19,14 @@ const DocAnalysis = () => {
     const handleAnalyze = async () => {
         if (!content.trim() || loading) return;
         setLoading(true);
-        try {
-            const res = await axios.post('/api/document/analyze', {
-                content,
-                action: activeMode
-            });
+      try {
+          const res = await axios.post(
+             'https://ai-ops-copilot-backend.onrender.com/document/analyze',
+        {
+            content,
+            action: activeMode
+        }
+    );
             setResult(res.data.analysis);
         } catch (err) {
             setResult('Error: Analysis engine unreachable.');
