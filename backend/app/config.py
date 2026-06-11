@@ -9,6 +9,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "").strip()
 GITHUB_ENDPOINT = os.getenv("GITHUB_ENDPOINT", "https://models.github.ai/inference")
 GITHUB_MODEL = os.getenv("GITHUB_MODEL", "openai/gpt-4o-mini")
+GITHUB_API_VERSION = os.getenv("GITHUB_API_VERSION", "2026-03-10")
 
 
 def github_token_debug_info():
@@ -18,5 +19,6 @@ def github_token_debug_info():
         "token_prefix": GITHUB_TOKEN[:4] if GITHUB_TOKEN else "",
         "endpoint": GITHUB_ENDPOINT,
         "model": GITHUB_MODEL,
+        "api_version": GITHUB_API_VERSION,
         "env_path": str(ENV_PATH),
     }

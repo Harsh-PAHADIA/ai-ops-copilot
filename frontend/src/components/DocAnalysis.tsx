@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { FileText, Search, Loader2, CheckCircle2, ChevronRight } from 'lucide-react';
 import api from '../api';
 import { useLanguage } from '../LanguageContext';
+import ProcessIntelligencePanel, { ProcessIntelligence } from './ProcessIntelligencePanel';
 
 const DocAnalysis = () => {
     const { t } = useLanguage();
     const [content, setContent] = useState('');
     const [result, setResult] = useState('');
+    const [intelligence, setIntelligence] = useState<ProcessIntelligence | null>(null);
     const [loading, setLoading] = useState(false);
     const [activeMode, setActiveMode] = useState('summarize');
 
@@ -20,6 +22,7 @@ const DocAnalysis = () => {
     if (!content.trim() || loading) return;
 
     setLoading(true);
+    setIntelligence(null);
 
     try {
         const res = await api.post(
@@ -32,9 +35,11 @@ const DocAnalysis = () => {
 
         console.log("Response:", res.data);
         setResult(res.data.analysis);
+        setIntelligence(res.data.intelligence || null);
 
     } catch (err: any) {
         console.error("API Error:", err);
+        setIntelligence(null);
         setResult(
             `Error: ${
                 err?.response?.data?.detail ||
@@ -99,6 +104,10 @@ const DocAnalysis = () => {
                         </div>
                     )}
                 </div>
+            </div>
+
+            <div className="lg:col-span-2">
+                <ProcessIntelligencePanel intelligence={intelligence} />
             </div>
         </div>
     );

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Cpu, Zap, Loader2, ArrowRight } from 'lucide-react';
 import api from '../api';
 import { useLanguage } from '../LanguageContext';
+import ProcessIntelligencePanel, { ProcessIntelligence } from './ProcessIntelligencePanel';
 
 const WorkflowOpt = () => {
     const { t } = useLanguage();
     const [description, setDescription] = useState('');
     const [plan, setPlan] = useState('');
+    const [intelligence, setIntelligence] = useState<ProcessIntelligence | null>(null);
     const [loading, setLoading] = useState(false);
     const [commonWorkflows, setCommonWorkflows] = useState<any[]>([]);
 
@@ -25,12 +27,15 @@ const WorkflowOpt = () => {
     const handleOptimize = async () => {
         if (!description.trim() || loading) return;
         setLoading(true);
+        setIntelligence(null);
         try {
             const res = await api.post('/workflow/optimize', {
                 task_description: description
             });
             setPlan(res.data.optimization_plan);
+            setIntelligence(res.data.intelligence || null);
         } catch (err) {
+            setIntelligence(null);
             setPlan('Error: Optimization engine offline.');
         } finally {
             setLoading(false);
@@ -100,6 +105,10 @@ const WorkflowOpt = () => {
                         <p className="text-slate-500 text-sm max-w-xs">Enter a process description to see how GPT-5 suggests automating it using modern tech stacks.</p>
                     </div>
                 )}
+            </div>
+
+            <div className="lg:col-span-2">
+                <ProcessIntelligencePanel intelligence={intelligence} />
             </div>
         </div>
     );
