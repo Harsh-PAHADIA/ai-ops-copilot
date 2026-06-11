@@ -3,12 +3,14 @@ import { Cpu, Zap, Loader2, ArrowRight } from 'lucide-react';
 import api from '../api';
 import { useLanguage } from '../LanguageContext';
 import ProcessIntelligencePanel, { ProcessIntelligence } from './ProcessIntelligencePanel';
+import { ProcessVisualization } from './WorkflowVisualization';
 
 const WorkflowOpt = () => {
     const { t } = useLanguage();
     const [description, setDescription] = useState('');
     const [plan, setPlan] = useState('');
     const [intelligence, setIntelligence] = useState<ProcessIntelligence | null>(null);
+    const [visualization, setVisualization] = useState<ProcessVisualization | null>(null);
     const [loading, setLoading] = useState(false);
     const [commonWorkflows, setCommonWorkflows] = useState<any[]>([]);
 
@@ -28,14 +30,17 @@ const WorkflowOpt = () => {
         if (!description.trim() || loading) return;
         setLoading(true);
         setIntelligence(null);
+        setVisualization(null);
         try {
             const res = await api.post('/workflow/optimize', {
                 task_description: description
             });
             setPlan(res.data.optimization_plan);
             setIntelligence(res.data.intelligence || null);
+            setVisualization(res.data.visualization || null);
         } catch (err) {
             setIntelligence(null);
+            setVisualization(null);
             setPlan('Error: Optimization engine offline.');
         } finally {
             setLoading(false);
@@ -108,7 +113,7 @@ const WorkflowOpt = () => {
             </div>
 
             <div className="lg:col-span-2">
-                <ProcessIntelligencePanel intelligence={intelligence} />
+                <ProcessIntelligencePanel intelligence={intelligence} visualization={visualization} />
             </div>
         </div>
     );

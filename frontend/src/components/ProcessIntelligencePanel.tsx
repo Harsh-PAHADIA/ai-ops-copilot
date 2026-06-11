@@ -7,6 +7,7 @@ import {
     ShieldAlert,
     TrendingUp
 } from 'lucide-react';
+import WorkflowVisualization, { ProcessVisualization, Bottleneck } from './WorkflowVisualization';
 
 export type RiskSeverity = 'Low' | 'Medium' | 'High' | string;
 
@@ -39,6 +40,7 @@ export interface ProcessIntelligence {
 
 interface ProcessIntelligencePanelProps {
     intelligence?: ProcessIntelligence | null;
+    visualization?: ProcessVisualization | null;
 }
 
 const severityStyles: Record<string, string> = {
@@ -96,7 +98,7 @@ const InsightList = ({
     </div>
 );
 
-const ProcessIntelligencePanel = ({ intelligence }: ProcessIntelligencePanelProps) => {
+const ProcessIntelligencePanel = ({ intelligence, visualization }: ProcessIntelligencePanelProps) => {
     if (!intelligence) {
         return null;
     }
@@ -108,6 +110,7 @@ const ProcessIntelligencePanel = ({ intelligence }: ProcessIntelligencePanelProp
 
     return (
         <section className="space-y-6">
+            {/* 1. Executive Insights */}
             <div className="glass-card p-6 bg-gradient-to-br from-indigo-500/10 via-white/[0.02] to-emerald-500/10 border-indigo-500/20">
                 <div className="flex flex-col gap-2 mb-5 md:flex-row md:items-end md:justify-between">
                     <div>
@@ -123,31 +126,7 @@ const ProcessIntelligencePanel = ({ intelligence }: ProcessIntelligencePanelProp
                 </div>
             </div>
 
-            <div className="glass-card p-6">
-                <div className="flex items-center gap-2 mb-5">
-                    <BadgeDollarSign size={20} className="text-emerald-300" />
-                    <h3 className="text-xl font-bold text-white">ROI & Efficiency Analysis</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    <MetricCard label="Process Steps" value={roi.process_steps} icon={ClipboardList} />
-                    <MetricCard label="Step Reduction" value={roi.potential_step_reduction} icon={TrendingUp} />
-                    <MetricCard label="Hours Saved" value={roi.hours_saved || roi.estimated_time_savings} icon={CheckCircle2} />
-                    <MetricCard label="Efficiency Gain" value={roi.efficiency_improvement_percent || roi.productivity_improvement} icon={TrendingUp} />
-                    <MetricCard label="Cost Reduction" value={roi.estimated_annual_cost_savings || roi.operational_cost_reduction} icon={BadgeDollarSign} />
-                    <MetricCard label="Productivity" value={roi.productivity_improvement} icon={TrendingUp} />
-                </div>
-                {assumptions.length > 0 && (
-                    <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Estimate Assumptions</p>
-                        <div className="space-y-1">
-                            {assumptions.map((assumption, index) => (
-                                <p key={index} className="text-xs text-slate-400 leading-relaxed">{assumption}</p>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-
+            {/* 2. Risk Assessment */}
             <div className="glass-card p-6">
                 <div className="flex items-center gap-2 mb-5">
                     <AlertTriangle size={20} className="text-amber-300" />
@@ -173,6 +152,71 @@ const ProcessIntelligencePanel = ({ intelligence }: ProcessIntelligencePanelProp
                     )}
                 </div>
             </div>
+
+            {/* 3. ROI & Efficiency Analysis */}
+            <div className="glass-card p-6">
+                <div className="flex items-center gap-2 mb-5">
+                    <BadgeDollarSign size={20} className="text-emerald-300" />
+                    <h3 className="text-xl font-bold text-white">ROI & Efficiency Analysis</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <MetricCard label="Process Steps" value={roi.process_steps} icon={ClipboardList} />
+                    <MetricCard label="Step Reduction" value={roi.potential_step_reduction} icon={TrendingUp} />
+                    <MetricCard label="Hours Saved" value={roi.hours_saved || roi.estimated_time_savings} icon={CheckCircle2} />
+                    <MetricCard label="Efficiency Gain" value={roi.efficiency_improvement_percent || roi.productivity_improvement} icon={TrendingUp} />
+                    <MetricCard label="Cost Reduction" value={roi.estimated_annual_cost_savings || roi.operational_cost_reduction} icon={BadgeDollarSign} />
+                    <MetricCard label="Productivity" value={roi.productivity_improvement} icon={TrendingUp} />
+                </div>
+                {assumptions.length > 0 && (
+                    <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Estimate Assumptions</p>
+                        <div className="space-y-1">
+                            {assumptions.map((assumption, index) => (
+                                <p key={index} className="text-xs text-slate-400 leading-relaxed">{assumption}</p>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* 4. Workflow Visualization */}
+            {visualization && (
+                <WorkflowVisualization 
+                    currentWorkflow={visualization.current_workflow} 
+                    optimizedWorkflow={visualization.optimized_workflow} 
+                />
+            )}
+
+            {/* 5. Bottleneck Analysis */}
+            {visualization?.bottlenecks && visualization.bottlenecks.length > 0 && (
+                <div className="glass-card p-6">
+                    <div className="flex items-center gap-2 mb-5">
+                        <AlertTriangle size={20} className="text-rose-400" />
+                        <h3 className="text-xl font-bold text-white">Bottleneck Highlights</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {visualization.bottlenecks.map((bottleneck: Bottleneck, index: number) => (
+                            <div key={`${bottleneck.name}-${index}`} className="rounded-xl border border-white/10 bg-slate-950/30 p-4 flex flex-col justify-between">
+                                <div>
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                        <h4 className="font-bold text-white text-sm leading-tight">{bottleneck.name}</h4>
+                                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${severityClass(bottleneck.risk_level)}`}>
+                                            {bottleneck.risk_level}
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mb-2">
+                                        Type: {bottleneck.type || 'Operational'}
+                                    </p>
+                                </div>
+                                <div className="mt-3 rounded-lg bg-white/[0.03] border border-white/5 p-3">
+                                    <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 mb-1">AI Recommendation</p>
+                                    <p className="text-xs text-slate-300 leading-relaxed">{bottleneck.recommendation}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </section>
     );
 };
