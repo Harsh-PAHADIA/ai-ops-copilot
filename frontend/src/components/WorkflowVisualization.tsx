@@ -14,11 +14,11 @@ export interface ProcessVisualization {
     bottlenecks?: Bottleneck[];
 }
 
-// Initialize mermaid configurations
+// 7. Verify Mermaid initialization
 mermaid.initialize({
     startOnLoad: false,
-    theme: 'dark',
     securityLevel: 'loose',
+    theme: 'dark',
     flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
@@ -76,20 +76,118 @@ const getFallbackChart = (title: string): string => {
     C --> D[Target Achieved]`;
 };
 
-// Static HTML fallback if mermaid rendering is fully failing/offline
-const getStaticHTMLFallback = (title: string): string => {
-    return `<div class="flex flex-col items-center justify-center p-6 space-y-4 w-full bg-slate-950/20 border border-white/5 rounded-xl text-slate-300">
-        <div class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-2">${title} Visual Process Map</div>
-        <div class="flex flex-col items-center space-y-2 w-full max-w-[200px]">
-            <div class="w-full text-center py-2 px-3 border border-white/10 bg-slate-900/50 rounded-lg text-xs font-medium">Start</div>
-            <div class="text-indigo-400">↓</div>
-            <div class="w-full text-center py-2 px-3 border border-white/10 bg-slate-900/50 rounded-lg text-xs font-medium">Process Plan</div>
-            <div class="text-indigo-400">↓</div>
-            <div class="w-full text-center py-2 px-3 border border-white/10 bg-slate-900/50 rounded-lg text-xs font-medium">Automation</div>
-            <div class="text-indigo-400">↓</div>
-            <div class="w-full text-center py-2 px-3 border border-white/10 bg-slate-900/50 rounded-lg text-xs font-medium">Complete</div>
+// Interface for parsed steps
+interface ParsedNode {
+    id: string;
+    label: string;
+    type: 'process' | 'decision' | 'start' | 'end';
+}
+
+// Robust parsing of Mermaid flowchart to steps
+const parseMermaidToSteps = (mermaidText: string): ParsedNode[] => {
+    if (!mermaidText) return [];
+    
+    const steps: ParsedNode[] = [];
+    const lines = mermaidText.split('\n');
+    const seenIds = new Set<string>();
+    
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('flowchart') || trimmed.startsWith('graph')) {
+            continue;
+        }
+        
+        // Match A[Label], A{Label}, A(Label), A["Label"] etc. globally per line
+        const nodeRegex = /(\w+)\s*(?:\["([^"]+)"\]|\[([^\]]+)\]|\{"([^"]+)"\}|\{([^\}]+)\}|\("([^"]+)"\)|\(([^\)]+)\))/g;
+        let match;
+        while ((match = nodeRegex.exec(trimmed)) !== null) {
+            const id = match[1];
+            if (!seenIds.has(id)) {
+                const label = match[2] || match[3] || match[4] || match[5] || match[6] || match[7] || id;
+                let type: 'process' | 'decision' | 'start' | 'end' = 'process';
+                
+                if (match[0].includes('{')) {
+                    type = 'decision';
+                } else if (label.toLowerCase() === 'start') {
+                    type = 'start';
+                } else if (label.toLowerCase() === 'end' || label.toLowerCase() === 'complete' || label.toLowerCase() === 'finish') {
+                    type = 'end';
+                }
+                
+                steps.push({ id, label, type });
+                seenIds.add(id);
+            }
+        }
+    }
+    
+    // Fallback simple scanner if regex fails to yield nodes
+    if (steps.length === 0) {
+        const bracketRegex = /\[([^\]]+)\]/g;
+        let match;
+        let count = 1;
+        while ((match = bracketRegex.exec(mermaidText)) !== null) {
+            steps.push({
+                id: `step-${count++}`,
+                label: match[1],
+                type: 'process'
+            });
+        }
+    }
+    
+    return steps;
+};
+
+// 9. Display workflow as HTML process cards if Mermaid SVG render fails
+const HTMLProcessMap: React.FC<{ chartText: string; title: string }> = ({ chartText, title }) => {
+    const steps = parseMermaidToSteps(chartText);
+    
+    if (steps.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center p-6 bg-slate-950/20 border border-white/5 rounded-xl text-slate-400">
+                <p className="text-xs italic">No process steps found to render.</p>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="flex flex-col items-center space-y-4 w-full p-6 bg-slate-950/20 rounded-xl border border-white/5 shadow-inner">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1">{title} Visual Process Map</div>
+            <div className="flex flex-col items-center w-full space-y-2 max-w-md">
+                {steps.map((step, index) => (
+                    <React.Fragment key={step.id}>
+                        {index > 0 && (
+                            <div className="flex flex-col items-center justify-center py-1">
+                                <span className="text-indigo-400 font-bold text-lg animate-bounce">↓</span>
+                            </div>
+                        )}
+                        <div className={`w-full p-4 border rounded-xl flex items-center justify-between gap-3 transition-all hover:border-indigo-500/20 ${
+                            step.type === 'decision'
+                                ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                                : step.type === 'start' || step.type === 'end'
+                                ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300'
+                                : 'bg-slate-900/50 border-white/10 text-slate-200'
+                        }`}>
+                            <div className="flex items-center gap-3">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                                    step.type === 'decision'
+                                        ? 'bg-amber-500/20 text-amber-300'
+                                        : 'bg-indigo-500/20 text-indigo-300'
+                                }`}>
+                                    {index + 1}
+                                </span>
+                                <span className="text-xs font-semibold leading-relaxed">{step.label}</span>
+                            </div>
+                            {step.type === 'decision' && (
+                                <span className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 shrink-0">
+                                    Decision
+                                </span>
+                            )}
+                        </div>
+                    </React.Fragment>
+                ))}
+            </div>
         </div>
-    </div>`;
+    );
 };
 
 interface MermaidProps {
@@ -101,11 +199,13 @@ const MermaidChart: React.FC<MermaidProps> = ({ chart, id }) => {
     const [svg, setSvg] = useState<string>('');
     const [renderedChart, setRenderedChart] = useState<string>('');
     const [isFallback, setIsFallback] = useState<boolean>(false);
+    const [useHTMLFallback, setUseHTMLFallback] = useState<boolean>(false);
 
     useEffect(() => {
         setSvg('');
         setRenderedChart(chart);
         setIsFallback(false);
+        setUseHTMLFallback(false);
     }, [chart]);
 
     useEffect(() => {
@@ -119,16 +219,40 @@ const MermaidChart: React.FC<MermaidProps> = ({ chart, id }) => {
             // Create temporary container attached to DOM
             const container = document.createElement('div');
             container.id = `${cleanId}-container`;
-            container.style.display = 'none';
+            
+            // 6. Verify container dimensions: width > 0, height > 0, overflow visible (not display: none)
+            container.style.position = 'absolute';
+            container.style.top = '-9999px';
+            container.style.left = '-9999px';
+            container.style.width = '800px';
+            container.style.height = '600px';
+            container.style.overflow = 'visible';
+            container.style.visibility = 'hidden';
+            
             document.body.appendChild(container);
 
             try {
-                const { svg: renderedSvg } = await mermaid.render(cleanId, renderedChart, container);
-                setSvg(renderedSvg);
-            } catch (err) {
-                console.error("Mermaid rendering error for chart:", renderedChart, err);
+                // 3. Verify that Mermaid receives valid graph definitions
+                console.log(`[Mermaid] Rendering ${id} using definition:`, renderedChart);
                 
-                // Cleanup crashed container elements
+                const { svg: renderedSvg } = await mermaid.render(cleanId, renderedChart, container);
+                
+                // 4. After mermaid.render(), log generated SVG length
+                console.log(`[Mermaid] SVG generated for ${id}. Length:`, renderedSvg ? renderedSvg.length : 0);
+                
+                if (renderedSvg && renderedSvg.length > 0) {
+                    // 5. Confirm that generated SVG is actually inserted into container
+                    container.innerHTML = renderedSvg;
+                    console.log(`[Mermaid] SVG successfully inserted into container for ${id}`);
+                    setSvg(renderedSvg);
+                } else {
+                    throw new Error("Rendered SVG is empty");
+                }
+            } catch (err) {
+                // 1. Inspect browser console for Mermaid runtime errors
+                console.error(`[Mermaid] Runtime rendering error for ${id}:`, err);
+                
+                // Cleanup crashed container elements from DOM
                 const badElement = document.getElementById(cleanId);
                 if (badElement) {
                     badElement.remove();
@@ -138,7 +262,8 @@ const MermaidChart: React.FC<MermaidProps> = ({ chart, id }) => {
                     setIsFallback(true);
                     setRenderedChart(getFallbackChart(id === 'current-workflow' ? 'Current' : 'Optimized'));
                 } else {
-                    setSvg(getStaticHTMLFallback(id === 'current-workflow' ? 'Current Workflow' : 'Optimized Workflow'));
+                    // 9. If fallback rendering also fails, use HTML process card fallback
+                    setUseHTMLFallback(true);
                 }
             } finally {
                 if (document.body.contains(container)) {
@@ -150,19 +275,37 @@ const MermaidChart: React.FC<MermaidProps> = ({ chart, id }) => {
         renderChart();
     }, [renderedChart, id, isFallback]);
 
+    if (useHTMLFallback) {
+        return <HTMLProcessMap chartText={chart} title={id === 'current-workflow' ? 'Current' : 'Optimized'} />;
+    }
+
     if (!svg) {
         return (
             <div className="flex items-center justify-center p-8 bg-slate-900/30 border border-white/5 rounded-xl text-slate-400 text-xs">
-                Generating visualization...
+                <div className="flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 rounded-full border border-indigo-400 border-t-transparent animate-spin" />
+                    <span>Generating visualization...</span>
+                </div>
             </div>
         );
     }
 
+    // 8. If SVG generation succeeds, force render using dangerouslySetInnerHTML and override CSS
     return (
-        <div 
-            className="mermaid-svg flex justify-center w-full overflow-x-auto p-4 bg-slate-950/20 rounded-xl border border-white/5 shadow-inner"
-            dangerouslySetInnerHTML={{ __html: svg }} 
-        />
+        <div className="w-full">
+            <style dangerouslySetInnerHTML={{ __html: `
+                .mermaid-svg svg {
+                    max-width: 100% !important;
+                    height: auto !important;
+                    display: block;
+                    margin: 0 auto;
+                }
+            `}} />
+            <div 
+                className="mermaid-svg flex justify-center w-full overflow-x-auto p-4 bg-slate-950/20 rounded-xl border border-white/5 shadow-inner"
+                dangerouslySetInnerHTML={{ __html: svg }} 
+            />
+        </div>
     );
 };
 
@@ -181,9 +324,13 @@ export const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
     const sanitizedCurrent = sanitizeMermaidSyntax(currentWorkflow);
     const sanitizedOptimized = sanitizeMermaidSyntax(optimizedWorkflow);
 
-    // 2. Console Diagnostics
-    console.log("Current Mermaid:", sanitizedCurrent);
-    console.log("Optimized Mermaid:", sanitizedOptimized);
+    // 2. Log exact requested visualization structure
+    const visualization = {
+        current: currentWorkflow,
+        optimized: optimizedWorkflow
+    };
+    console.log("Current visualization:", visualization.current);
+    console.log("Optimized visualization:", visualization.optimized);
 
     if (loading) {
         return (
