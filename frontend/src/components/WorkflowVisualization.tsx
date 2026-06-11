@@ -50,16 +50,17 @@ const MermaidChart: React.FC<MermaidProps> = ({ chart, id }) => {
         if (!chart || chart.trim() === '') return;
 
         const renderChart = async () => {
+            const uniqueSuffix = Math.random().toString(36).substring(2, 9);
+            const baseCleanId = `mermaid-${id.replace(/[^a-zA-Z0-9]/g, '-')}`;
+            const cleanId = `${baseCleanId}-${uniqueSuffix}`;
             try {
-                // Ensure a safe, alphanumeric ID for rendering
-                const cleanId = `mermaid-${id.replace(/[^a-zA-Z0-9]/g, '-')}`;
                 const { svg: renderedSvg } = await mermaid.render(cleanId, chart);
                 setSvg(renderedSvg);
             } catch (err) {
                 console.error("Mermaid rendering error:", err);
                 setError(true);
                 // Clean up elements that mermaid leaves in the DOM upon crash
-                const badElement = document.getElementById(`mermaid-${id.replace(/[^a-zA-Z0-9]/g, '-')}`);
+                const badElement = document.getElementById(cleanId);
                 if (badElement) {
                     badElement.remove();
                 }

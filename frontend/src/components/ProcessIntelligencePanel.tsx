@@ -7,7 +7,7 @@ import {
     ShieldAlert,
     TrendingUp
 } from 'lucide-react';
-import WorkflowVisualization, { ProcessVisualization, Bottleneck } from './WorkflowVisualization';
+import { WorkflowVisualization, ProcessVisualization, Bottleneck } from './WorkflowVisualization';
 
 export type RiskSeverity = 'Low' | 'Medium' | 'High' | string;
 

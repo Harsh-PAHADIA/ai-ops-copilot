@@ -13,8 +13,28 @@ class DocumentRequest(BaseModel):
 def analyze_document(req: DocumentRequest):
     prompts = {
         "summarize": "Summarize this internal document for a corporate engineer. Focus on operational impacts.",
-        "extract_tasks": "Extract all actionable tasks and owners from this document. Format as a JSON list.",
-        "analyze_sentiment": "Analyze the sentiment of this internal communication and identify potential friction points."
+        "extract_tasks": """Extract all actionable tasks and owners from this document.
+Return a valid JSON array of objects.
+Use this exact JSON shape (no markdown formatting, no comments, no code fences):
+[
+  {
+    "task": "Actionable task description",
+    "owner": "Name or role of the owner (if any)"
+  }
+]
+""",
+        "analyze_sentiment": """Analyze the document for confidential data, PII, compliance risks, credentials, and sensitive content.
+Return a valid JSON array of objects, each representing a flagged item.
+Use this exact JSON shape (no markdown formatting, no comments, no code fences):
+[
+  {
+    "finding": "Brief description of the sensitive item found",
+    "type": "PII | Credential | Compliance | Confidentiality",
+    "severity": "Low | Medium | High | Critical",
+    "recommendation": "Actionable recommendation to mitigate the risk"
+  }
+]
+"""
     }
     
     system_prompt = prompts.get(req.action, prompts["summarize"])

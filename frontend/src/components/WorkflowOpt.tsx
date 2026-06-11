@@ -35,6 +35,7 @@ const WorkflowOpt = () => {
             const res = await api.post('/workflow/optimize', {
                 task_description: description
             });
+            console.log("Optimize API response:", res.data);
             setPlan(res.data.optimization_plan);
             setIntelligence(res.data.intelligence || null);
             setVisualization(res.data.visualization || null);
